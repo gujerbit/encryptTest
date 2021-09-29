@@ -6,14 +6,20 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.gujerbit.encrypt.util.Converter;
+
 @CrossOrigin("*")
 @Controller
 public class AESController {
+	
+	@Autowired
+	private Converter converter;
 	
 	@GetMapping("/encrypt/AES-CBC") //256 = key length -> 32byte, iv는 키 값과 무관하게 16byte
 	public @ResponseBody String encryptAESCBC(HttpServletRequest req) {
@@ -27,7 +33,7 @@ public class AESController {
 			cipher.init(Cipher.ENCRYPT_MODE, ss, ips); //암호화 모드로 초기화
 			byte[] encrypt = cipher.doFinal(value.getBytes()); //초기화 모드에 따라서 작업
 			
-			return byteToHex(encrypt); //16진수로 변환
+			return converter.byteToHex(encrypt); //16진수로 변환
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -44,7 +50,7 @@ public class AESController {
 			SecretKeySpec ss = new SecretKeySpec(key.getBytes(), "AES");
 			IvParameterSpec ips = new IvParameterSpec(iv.getBytes());
 			cipher.init(Cipher.DECRYPT_MODE, ss, ips); //복호화 모드로 초기화
-			byte[] decrypt = cipher.doFinal(hexToByte(value));
+			byte[] decrypt = cipher.doFinal(converter.hexToByte(value));
 			
 			return new String(decrypt);
 		} catch (Exception e) {
@@ -65,7 +71,7 @@ public class AESController {
 			cipher.init(Cipher.ENCRYPT_MODE, ss, gps);
 			byte[] encrypt = cipher.doFinal(value.getBytes());
 			
-			return byteToHex(encrypt);
+			return converter.byteToHex(encrypt);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -82,35 +88,13 @@ public class AESController {
 			SecretKeySpec ss = new SecretKeySpec(key.getBytes(), "AES");
 			GCMParameterSpec gps = new GCMParameterSpec(128, iv.getBytes());
 			cipher.init(Cipher.DECRYPT_MODE, ss, gps);
-			byte[] decrypt = cipher.doFinal(hexToByte(value));
+			byte[] decrypt = cipher.doFinal(converter.hexToByte(value));
 			
 			return new String(decrypt);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
-	}
-	
-	
-	
-	private String byteToHex(byte[] value) {
-		StringBuffer sb = new StringBuffer(value.length * 2);
-		String hex = "";
-		
-		for(int i = 0; i < value.length; i++) {
-			hex = "0" + Integer.toHexString(0xff & value[i]);
-			sb.append(hex.substring(hex.length() - 2));
-		}
-		
-		return sb.toString();
-	}
-	
-	private byte[] hexToByte(String value) {
-		byte[] result = new byte[value.length() / 2];
-		
-		for(int i = 0; i < result.length; i++) result[i] = (byte) Integer.parseInt(value.substring(2 * i, 2 * i + 2), 16);
-		
-		return result;
 	}
 
 }

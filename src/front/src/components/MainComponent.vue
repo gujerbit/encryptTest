@@ -14,10 +14,12 @@
         <option>SHA-512</option>
         <option>AES-CBC</option>
         <option>AES-GCM</option>
+        <option>RSA</option>
       </select>
       <button v-if="encrypt.type !== '' && !encrypt.type.includes('AES')" @click="encryptValue()" :disabled="encrypt.value === ''">encrypt</button>
       <button v-if="encrypt.type !== '' && encrypt.type.includes('AES')" @click="encryptValue()" :disabled="encrypt.value === '' || encrypt.iv === '' || encrypt.key === ''">encrypt</button>
-      <button v-if="encrypt.type.includes('AES')" @click="decryptValue()" :disabled="encrypt.value === '' || encrypt.iv === '' || encrypt.key === ''">decrypt</button>
+      <button v-if="encrypt.type !== '' && encrypt.type.includes('AES')" @click="decryptValue()" :disabled="encrypt.value === '' || encrypt.iv === '' || encrypt.key === ''">decrypt</button>
+      <button v-if="encrypt.type !== '' && encrypt.type.includes('RSA')" @click="decryptValue()" :disabled="encrypt.value === ''">decrypt</button>
     </div>
     <textarea readonly :value="encrypt.result" />
   </div>
@@ -67,8 +69,13 @@ export default {
         alert(`해당 값은 ${32}byte 값을 가져야 합니다! (현재 ${checkByteLength(encrypt.value.key, 32)}byte)`);
       }
 
-      let { data } = await axios.get(`/decrypt/${encrypt.value.type}?param=${encodeURIComponent(encrypt.value.value)}&iv=${encodeURIComponent(encrypt.value.iv)}&key=${encodeURIComponent(encrypt.value.key)}`);
-      encrypt.value.result = data;
+      if(encrypt.value.iv === '' && encrypt.value.key === '') {
+        let { data } = await axios.get(`/decrypt/${encrypt.value.type}?param=${encodeURIComponent(encrypt.value.value)}`);
+        encrypt.value.result = data;
+      } else if(encrypt.value.iv !== '' && encrypt.value.key !== '') {
+        let { data } = await axios.get(`/decrypt/${encrypt.value.type}?param=${encodeURIComponent(encrypt.value.value)}&iv=${encodeURIComponent(encrypt.value.iv)}&key=${encodeURIComponent(encrypt.value.key)}`);
+        encrypt.value.result = data;
+      }
     };
     const checkByteLength = (value) => {
       let result = 0;
