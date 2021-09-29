@@ -1,0 +1,116 @@
+package com.gujerbit.encrypt.controller;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@CrossOrigin("*")
+@Controller
+public class AESController {
+	
+	@GetMapping("/encrypt/AES-CBC") //256 = key length -> 32byte, iv는 키 값과 무관하게 16byte
+	public @ResponseBody String encryptAESCBC(HttpServletRequest req) {
+		try {
+			String value = req.getParameter("param");
+			String iv = req.getParameter("iv");
+			String key = req.getParameter("key");
+			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			SecretKeySpec ss = new SecretKeySpec(key.getBytes(), "AES"); //지정된 알고리즘으로부터 바이트 배열을 넘겨받아 키 구축
+			IvParameterSpec ips = new IvParameterSpec(iv.getBytes()); //iv값 생성
+			cipher.init(Cipher.ENCRYPT_MODE, ss, ips); //암호화 모드로 초기화
+			byte[] encrypt = cipher.doFinal(value.getBytes()); //초기화 모드에 따라서 작업
+			
+			return byteToHex(encrypt); //16진수로 변환
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	@GetMapping("/decrypt/AES-CBC")
+	public @ResponseBody String decryptAESCBC(HttpServletRequest req) {
+		try {
+			String value = req.getParameter("param");
+			String iv = req.getParameter("iv");
+			String key = req.getParameter("key");
+			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			SecretKeySpec ss = new SecretKeySpec(key.getBytes(), "AES");
+			IvParameterSpec ips = new IvParameterSpec(iv.getBytes());
+			cipher.init(Cipher.DECRYPT_MODE, ss, ips); //복호화 모드로 초기화
+			byte[] decrypt = cipher.doFinal(hexToByte(value));
+			
+			return new String(decrypt);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	@GetMapping("/encrypt/AES-GCM") //256 = key length -> 32byte, iv는 키 값과 무관하게 16byte
+	public @ResponseBody String encryptAESGCM(HttpServletRequest req) {
+		try {
+			String value = req.getParameter("param");
+			String iv = req.getParameter("iv");
+			String key = req.getParameter("key");
+			Cipher cipher = Cipher.getInstance("AES/GCM/PKCS5Padding");
+			SecretKeySpec ss = new SecretKeySpec(key.getBytes(), "AES");
+			GCMParameterSpec gps = new GCMParameterSpec(128, iv.getBytes()); //지정된 태그의 길이 및 iv값을 사용
+			cipher.init(Cipher.ENCRYPT_MODE, ss, gps);
+			byte[] encrypt = cipher.doFinal(value.getBytes());
+			
+			return byteToHex(encrypt);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	@GetMapping("/decrypt/AES-GCM")
+	public @ResponseBody String decryptAESGCM(HttpServletRequest req) {
+		try {
+			String value = req.getParameter("param");
+			String iv = req.getParameter("iv");
+			String key = req.getParameter("key");
+			Cipher cipher = Cipher.getInstance("AES/GCM/PKCS5Padding");
+			SecretKeySpec ss = new SecretKeySpec(key.getBytes(), "AES");
+			GCMParameterSpec gps = new GCMParameterSpec(128, iv.getBytes());
+			cipher.init(Cipher.DECRYPT_MODE, ss, gps);
+			byte[] decrypt = cipher.doFinal(hexToByte(value));
+			
+			return new String(decrypt);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	
+	private String byteToHex(byte[] value) {
+		StringBuffer sb = new StringBuffer(value.length * 2);
+		String hex = "";
+		
+		for(int i = 0; i < value.length; i++) {
+			hex = "0" + Integer.toHexString(0xff & value[i]);
+			sb.append(hex.substring(hex.length() - 2));
+		}
+		
+		return sb.toString();
+	}
+	
+	private byte[] hexToByte(String value) {
+		byte[] result = new byte[value.length() / 2];
+		
+		for(int i = 0; i < result.length; i++) result[i] = (byte) Integer.parseInt(value.substring(2 * i, 2 * i + 2), 16);
+		
+		return result;
+	}
+
+}
