@@ -68,10 +68,10 @@ public class RSAController {
 	
 	private KeyStore getKeyStore() {
 		try {
-			KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
-			String password = "elsh1122!";
-			FileInputStream fis = new FileInputStream("src/main/resources/certificate.p12");
-			store.load(fis, password.toCharArray());
+			KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType()); //default PKCS12
+			String password = "elsh1122!"; //인증서 암호
+			FileInputStream fis = new FileInputStream("src/main/resources/certificate.p12"); //해당 위치의 인증서 읽어들여옴
+			store.load(fis, password.toCharArray()); //keystore 객체로 해당 인증서 로드
 			fis.close();
 			
 			return store;
@@ -83,7 +83,7 @@ public class RSAController {
 	
 	private PublicKey getPublicKey() {
 		try {
-			Certificate cf = getKeyStore().getCertificate("certificate");
+			Certificate cf = getKeyStore().getCertificate("certificate"); //certificate -> 인증서 alias
 			
 			return cf.getPublicKey();
 		} catch (Exception e) {
