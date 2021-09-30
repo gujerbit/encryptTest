@@ -31,7 +31,7 @@ import axios from 'axios';
 
 export default {
   setup() {
-    axios.defaults.baseURL = 'http://localhost:8090';
+    axios.defaults.baseURL = 'https://localhost';
     const encrypt = ref({
       type: '',
       value: '',
